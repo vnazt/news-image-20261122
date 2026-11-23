@@ -212,31 +212,35 @@ REGION_TALLY = Counter(
 )
 
 # ------------------------------------------------------------------ map
-# A coarse block world, one character per cell: '#' is land.
-# 48 columns x 21 rows, drawn by hand for this page.
+# A coarse block world at 60 x 24 cells: '#' is land. The grid is
+# drawn for this page; pins below are fractions of the map box, so
+# they stay put whatever the grid's resolution.
 
 WORLD = [
-    "                                                ",
-    "   #####        ##########################      ",
-    " #########     ############################     ",
-    "  #########    ###########################      ",
-    "   ########     #########################       ",
-    "    ######       #######################        ",
-    "     #####        #####################         ",
-    "      ####         ##################           ",
-    "      ###           ################            ",
-    "       ###           ##############             ",
-    "       ####           ############              ",
-    "        #####          ##########               ",
-    "        ######          ########        ##      ",
-    "         ####            ######        ####     ",
-    "         ###              ####          ##      ",
-    "          ##               ##                   ",
-    "          #                         #######     ",
-    "                                    #######     ",
-    "                                     #####      ",
-    "                                                ",
-    "                                                ",
+    "                                                            ",
+    "     ######          ####################################   ",
+    "  ##########        ######################################  ",
+    "  ###########       #####################################   ",
+    "   #########        ####################################    ",
+    "    ########         ##################################     ",
+    "     ######           ################################      ",
+    "      #####            #############################        ",
+    "      ####              #########################           ",
+    "       ###               #######################            ",
+    "       ###                #####################             ",
+    "       ####                ##################               ",
+    "        #####               ################        ##      ",
+    "        ######               #############         ####     ",
+    "         #####                ##########            ##      ",
+    "         ####                  ########                     ",
+    "          ###                   ######           #######    ",
+    "          ##                     ####            #######    ",
+    "          #                       ##              #####     ",
+    "                                                            ",
+    "                                                            ",
+    "                                                            ",
+    "                                                            ",
+    "                                                            ",
 ]
 
 # Pin for every pictured story, as a fraction of the map box.
@@ -263,60 +267,67 @@ PINS = {
 
 def wrap_to(draw, text, fnt, width):
     """Greedy word wrap; returns the list of lines that fit width."""
-    out, line = [], ""
-    for word in text.split():
-        trial = (line + " " + word).strip()
-        if draw.textlength(trial, font=fnt) <= width or not line:
-            line = trial
+    words = text.split()
+    lines, current = [], words[0] if words else ""
+    for word in words[1:]:
+        trial = current + " " + word
+        if draw.textlength(trial, font=fnt) <= width:
+            current = trial
         else:
-            out.append(line)
-            line = word
-    if line:
-        out.append(line)
-    return out
+            lines.append(current)
+            current = word
+    lines.append(current)
+    return lines
 
 
 def block(draw, x, y, text, fnt, fill, width, leading, cap=None):
     """Draw wrapped text; returns the y just below the last line."""
     lines = wrap_to(draw, text, fnt, width)
-    if cap is not None:
-        lines = lines[:cap]
-    for i, ln in enumerate(lines):
-        draw.text((x, y + i * leading), ln, font=fnt, fill=fill)
-    return y + len(lines) * leading
+    shown = lines if cap is None else lines[:cap]
+    yy = y
+    for ln in shown:
+        draw.text((x, yy), ln, font=fnt, fill=fill)
+        yy += leading
+    return yy
 
 
 def middle(draw, cx, y, text, fnt, fill):
-    draw.text((cx - draw.textlength(text, font=fnt) / 2, y), text,
+    box = draw.textbbox((0, 0), text, font=fnt)
+    draw.text((cx - (box[2] - box[0]) / 2 - box[0], y), text,
               font=fnt, fill=fill)
 
 
 def fit(draw, x, y, text, path, size, width, fill, floor=8):
     """Draw one line, shrinking the font until it fits the width."""
     s = size
-    while s > floor and draw.textlength(text, font=font(path, s)) > width:
+    while True:
+        fnt = font(path, s)
+        if draw.textlength(text, font=fnt) <= width or s <= floor:
+            break
         s -= 1
-    draw.text((x, y), text, font=font(path, s), fill=fill)
+    draw.text((x, y), text, font=fnt, fill=fill)
 
 
 def pin(draw, cx, cy, num, r=8.5):
     draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=RED,
                  outline=(255, 255, 255), width=2)
-    fnt = font(SANS_BOLD, 10 if num < 10 else 9)
     label = str(num)
-    draw.text((cx - draw.textlength(label, font=fnt) / 2, cy - 5.5),
+    fnt = font(SANS_BOLD, 10 if num < 10 else 9)
+    box = draw.textbbox((0, 0), label, font=fnt)
+    draw.text((cx - (box[2] - box[0]) / 2 - box[0], cy - 5.5),
               label, font=fnt, fill=(255, 255, 255))
 
 
 def burst(draw, cx, cy, r, fill=ORANGE, core=GOLD):
     import math
-    pts = []
-    for i in range(16):
-        ang = math.pi * i / 8
-        rad = r if i % 2 == 0 else r * 0.42
-        pts.append((cx + rad * math.cos(ang), cy + rad * math.sin(ang)))
-    draw.polygon(pts, fill=fill)
-    draw.ellipse([cx - r * 0.3, cy - r * 0.3, cx + r * 0.3, cy + r * 0.3],
+    spikes = []
+    for i in range(24):
+        ang = math.tau * i / 24
+        rad = r if i % 2 == 0 else r * 0.45
+        spikes.append((cx + rad * math.cos(ang), cy + rad * math.sin(ang)))
+    draw.polygon(spikes, fill=fill)
+    inner = r * 0.3
+    draw.ellipse([cx - inner, cy - inner, cx + inner, cy + inner],
                  fill=core)
 
 # ------------------------------------------------------------------ scenes
@@ -384,45 +395,44 @@ def scene_drones(d, x, y, w, h):
 
 
 def scene_cop(d, x, y, w, h):
-    """A summit clock run past the hour; the draft text with its
-    fossil-fuels line struck out; a calendar whose days run out —
-    the summit closed two days late, with nothing adopted."""
-    d.rectangle([x, y, x + w, y + h], fill=(38, 46, 40))
-    cy = y + h / 2
-    # clock, left
-    cx = x + 0.14 * w
-    r = h * 0.32
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], outline=(235, 232, 220), width=3)
-    d.line([cx, cy, cx, cy - r * 0.72], fill=(235, 232, 220), width=3)
-    d.line([cx, cy, cx + r * 0.55, cy + r * 0.30], fill=RED, width=3)
-    d.text((cx - 16, cy + r + 4), "OVERTIME", font=font(SANS_BOLD, 8),
-           fill=(235, 232, 220))
-    # the draft, centre: a page whose key line is struck through
-    dx0, dy0 = x + 0.28 * w, y + 7
-    dx1, dy1 = x + 0.60 * w, y + h - 7
-    d.rectangle([dx0, dy0, dx1, dy1], fill=(238, 234, 222))
-    d.text((dx0 + 6, dy0 + 4), "FINAL TEXT", font=font(SANS_BOLD, 8), fill=INK)
-    for i, wd in enumerate((0.78, 0.60)):
-        ly = dy0 + 21 + i * 10
-        d.line([dx0 + 6, ly, dx0 + wd * (dx1 - dx0), ly],
-               fill=(120, 118, 110), width=2)
-    fy = dy0 + 45
-    ff = font(SERIF_ITALIC, 11)
-    d.text((dx0 + 6, fy), "fossil fuels", font=ff, fill=INK)
-    d.line([dx0 + 4, fy + 6, dx0 + 8 + d.textlength("fossil fuels", font=ff),
-            fy + 6], fill=RED, width=2)
-    d.text((dx0 + 6, fy + 16), "NOT ADOPTED", font=font(SANS_BOLD, 8),
-           fill=RED)
-    # calendar, right: the scheduled days run out on the red 22nd
-    gx = x + 0.65 * w
-    cell = 0.335 * w / 6
-    for i, day in enumerate(("17", "18", "19", "20", "21", "22")):
-        cx0 = gx + i * cell
-        d.rectangle([cx0 + 1, cy - 13, cx0 + cell - 1, cy + 7],
-                    fill=RED if day == "22" else (72, 82, 74))
-        middle(d, cx0 + cell / 2, cy - 9, day, font(SANS_BOLD, 9),
-               (245, 243, 235))
-    d.text((gx + 1, cy + 12), "TWO DAYS OVER", font=font(SANS_BOLD, 8),
+    """The rejected text: a tall document page crossed by a big red
+    X, its fossil-fuels line struck through, while the flags outside
+    the hall stand at half-mast — the summit adopted nothing."""
+    d.rectangle([x, y, x + w, y + h], fill=(34, 44, 38))
+    # the document, left of centre
+    px0, py0 = x + 0.30 * w, y + 6
+    px1, py1 = x + 0.62 * w, y + h - 6
+    d.rectangle([px0, py0, px1, py1], fill=(238, 234, 222))
+    d.text((px0 + 7, py0 + 5), "FINAL TEXT", font=font(SANS_BOLD, 9),
+           fill=INK)
+    for i, frac in enumerate((0.82, 0.66, 0.74)):
+        ly = py0 + 24 + i * 11
+        d.line([px0 + 7, ly, px0 + 7 + frac * (px1 - px0 - 14), ly],
+               fill=(122, 120, 112), width=2)
+    ff = font(SERIF_ITALIC, 12)
+    fy = py0 + 60
+    d.text((px0 + 7, fy), "fossil fuels", font=ff, fill=INK)
+    d.line([px0 + 5, fy + 7,
+            px0 + 9 + d.textlength("fossil fuels", font=ff), fy + 7],
+           fill=RED, width=2)
+    # the verdict: a red X across the whole page
+    d.line([px0 + 4, py0 + 4, px1 - 4, py1 - 4], fill=RED, width=3)
+    d.line([px0 + 4, py1 - 4, px1 - 4, py0 + 4], fill=RED, width=3)
+    # flags at half-mast, right
+    for i, fx in enumerate((0.70, 0.80, 0.90)):
+        gx = x + fx * w
+        d.line([gx, y + 8, gx, y + h - 8], fill=(210, 208, 198), width=2)
+        fy2 = y + h * 0.42
+        d.rectangle([gx, fy2, gx + 0.07 * w, fy2 + 9],
+                    fill=(150, 60, 50) if i == 1 else (70, 90, 140))
+    # a lone gavel resting at the left, unused
+    gx = x + 0.10 * w
+    gy = y + h * 0.62
+    d.line([gx - 9, gy + 9, gx + 11, gy - 11], fill=(196, 150, 84), width=4)
+    d.rectangle([gx + 3, gy - 15, gx + 15, gy - 5], fill=(150, 100, 50))
+    d.line([x + 0.04 * w, gy + 13, x + 0.24 * w, gy + 13],
+           fill=(235, 232, 220), width=2)
+    d.text((x + 0.70 * w, y + h - 13), "NO DEAL", font=font(SANS_BOLD, 9),
            fill=(245, 243, 235))
 
 
@@ -551,22 +561,36 @@ def scene_nba(d, x, y, w, h):
 
 
 def scene_ship(d, x, y, w, h):
-    """Grey cargo ship, fire on deck, dawn sea (Gulf of Finland)."""
-    _sea(d, x, y, w, h, tone=(24, 48, 70))
-    d.rectangle([x, y, x + w, y + h * 0.30], fill=(70, 66, 60))
-    gy = y + h * 0.58
-    d.polygon([(x + 0.10 * w, gy), (x + 0.88 * w, gy), (x + 0.82 * w, gy + 13),
-               (x + 0.16 * w, gy + 13)], fill=(96, 104, 114))
-    d.rectangle([x + 0.68 * w, gy - 16, x + 0.78 * w, gy], fill=(110, 118, 128))
-    for fx in (0.24, 0.38, 0.52):
-        d.rectangle([x + fx * w, gy - 8, x + fx * w + 16, gy], fill=(140, 90, 60))
-    burst(d, x + 0.45 * w, gy - 10, 10)
-    for i, (fx, fy) in enumerate([(0.44, 0.40), (0.50, 0.33), (0.57, 0.27)]):
-        r = 5 + i * 2
-        d.ellipse([x + fx * w - r, y + fy * h - r, x + fx * w + r,
-                   y + fy * h + r], fill=(122, 120, 114))
-    _waves(d, x, y, w, [y + h - 6])
-    d.text((x + 0.28 * w, gy + 3), "SPARTA II", font=font(SANS_BOLD, 8),
+    """The burning freighter low in the frame, a rescue helicopter
+    above it playing a searchlight down, water jets arcing in."""
+    _sea(d, x, y, w, h, tone=(22, 44, 66))
+    d.rectangle([x, y, x + w, y + h * 0.26], fill=(64, 62, 58))
+    keel = y + h * 0.70
+    # hull riding low, containers stacked aft
+    d.polygon([(x + 0.08 * w, keel), (x + 0.90 * w, keel),
+               (x + 0.84 * w, keel + 9), (x + 0.14 * w, keel + 9)],
+              fill=(88, 96, 106))
+    for i, fx in enumerate((0.58, 0.68, 0.78)):
+        d.rectangle([x + fx * w, keel - 9, x + fx * w + 13, keel],
+                    fill=(140, 90, 60) if i != 1 else (70, 110, 130))
+    d.rectangle([x + 0.16 * w, keel - 13, x + 0.26 * w, keel],
+                fill=(104, 112, 122))
+    burst(d, x + 0.40 * w, keel - 8, 9)
+    # helicopter, upper left: body, tail, rotor blur, light cone
+    hx, hy = x + 0.30 * w, y + h * 0.20
+    d.ellipse([hx - 10, hy - 4, hx + 10, hy + 5], fill=(200, 204, 210))
+    d.polygon([(hx + 9, hy - 1), (hx + 24, hy - 5), (hx + 24, hy - 1),
+               (hx + 9, hy + 2)], fill=(200, 204, 210))
+    d.line([hx - 15, hy - 7, hx + 15, hy - 7], fill=(230, 232, 236), width=2)
+    d.polygon([(hx - 3, hy + 5), (x + 0.40 * w, keel - 14),
+               (x + 0.50 * w, keel - 14)], fill=(110, 120, 138))
+    # water jets from the ship's side onto the fire
+    d.arc([x + 0.30 * w, keel - 22, x + 0.48 * w, keel + 2], 300, 60,
+          fill=(170, 216, 238), width=2)
+    d.arc([x + 0.52 * w, keel - 22, x + 0.70 * w, keel + 2], 120, 240,
+          fill=(170, 216, 238), width=2)
+    _waves(d, x, y, w, [y + h - 5])
+    d.text((x + 0.60 * w, keel + 2), "SPARTA II", font=font(SANS_BOLD, 8),
            fill=(228, 232, 238))
 
 
@@ -665,40 +689,70 @@ def scene_liquor(d, x, y, w, h):
 
 
 def scene_factory(d, x, y, w, h):
-    d.rectangle([x, y, x + w, y + h], fill=(56, 40, 34))
-    base = y + h
-    d.rectangle([x + 0.10 * w, base - 16, x + 0.62 * w, base], fill=(30, 24, 20))
-    d.polygon([(x + 0.10 * w, base - 16), (x + 0.26 * w, base - 22),
-               (x + 0.42 * w, base - 16)], fill=(30, 24, 20))
-    d.rectangle([x + 0.70 * w, base - 26, x + 0.76 * w, base], fill=(30, 24, 20))
-    for fx, fh in [(0.24, 0.34), (0.36, 0.46), (0.50, 0.30)]:
+    """Night plant: two chimneys, fire glowing through a torn roof,
+    and a fire engine below playing one thin jet of water up."""
+    d.rectangle([x, y, x + w, y + h], fill=(50, 36, 32))
+    floor_y = y + h
+    # main shed with a jagged tear in its roof
+    d.rectangle([x + 0.08 * w, floor_y - 15, x + 0.60 * w, floor_y],
+                fill=(28, 22, 19))
+    d.polygon([(x + 0.08 * w, floor_y - 15), (x + 0.24 * w, floor_y - 21),
+               (x + 0.34 * w, floor_y - 16), (x + 0.44 * w, floor_y - 22),
+               (x + 0.60 * w, floor_y - 15)], fill=(28, 22, 19))
+    # flames licking out of the tear
+    for fx, fh in [(0.28, 0.30), (0.38, 0.42), (0.50, 0.26)]:
         cx = x + fx * w
-        d.polygon([(cx - 6, base - 14), (cx, base - 14 - fh * h),
-                   (cx + 6, base - 14)], fill=ORANGE)
-        d.polygon([(cx - 3, base - 14), (cx, base - 14 - fh * h * 0.6),
-                   (cx + 3, base - 14)], fill=GOLD)
-    for i, fx in enumerate((0.30, 0.44, 0.58)):
-        r = 6 + i * 3
-        d.ellipse([x + fx * w - r, y + 2 + i * 2, x + fx * w + r,
-                   y + 2 + i * 2 + r], fill=(96, 88, 82))
+        d.polygon([(cx - 5, floor_y - 16), (cx, floor_y - 16 - fh * h),
+                   (cx + 5, floor_y - 16)], fill=ORANGE)
+        d.polygon([(cx - 2, floor_y - 16), (cx, floor_y - 16 - fh * h * 0.55),
+                   (cx + 2, floor_y - 16)], fill=GOLD)
+    # chimneys, right, one still smoking
+    for fx in (0.68, 0.80):
+        d.rectangle([x + fx * w, floor_y - 27, x + fx * w + 6, floor_y],
+                    fill=(28, 22, 19))
+    for i in range(3):
+        r = 4 + i * 2
+        sx = x + 0.83 * w
+        d.ellipse([sx - r, y + 2 + i * 4, sx + r, y + 2 + i * 4 + r],
+                  fill=(100, 92, 86))
+    # fire engine silhouette with its jet
+    ex = x + 0.66 * w
+    d.rectangle([ex, floor_y - 7, ex + 22, floor_y - 1], fill=(150, 40, 30))
+    d.rectangle([ex + 15, floor_y - 11, ex + 22, floor_y - 7],
+                fill=(150, 40, 30))
+    for fx in (0.70, 0.86):
+        cx = x + fx * w
+        d.ellipse([cx - 3, floor_y - 4, cx + 3, floor_y + 1], fill=(10, 10, 10))
+    d.arc([ex - 0.30 * w, floor_y - 30, ex + 4, floor_y - 2], 290, 350,
+          fill=(170, 216, 238), width=2)
 
 
 def scene_quake(d, x, y, w, h):
-    d.rectangle([x, y, x + w, y + h], fill=(66, 58, 48))
-    base = y + h
-    d.polygon([(x, base), (x + 0.34 * w, y + 6), (x + 0.55 * w, base)],
-              fill=(44, 38, 32))
-    d.polygon([(x + 0.30 * w, y + 12), (x + 0.34 * w, y + 6),
-               (x + 0.38 * w, y + 12)], fill=(235, 235, 235))
-    pts = [(x + 0.52 * w, base - 2), (x + 0.60 * w, base - 12),
-           (x + 0.66 * w, base - 8), (x + 0.74 * w, base - 18),
-           (x + 0.82 * w, base - 12), (x + 0.92 * w, base - 20)]
-    d.line(pts, fill=(12, 10, 8), width=3)
-    d.line([x, base - 1, x + w, base - 1], fill=(12, 10, 8), width=2)
-    hx = x + 0.60 * w
-    d.rectangle([hx, base - 12, hx + 13, base - 2], fill=(226, 200, 150))
-    d.polygon([(hx - 2, base - 12), (hx + 6, base - 17), (hx + 15, base - 12)],
-              fill=(150, 60, 40))
+    """A seismograph trace spiking across the top; below it a house
+    wall whose brick courses are split by one black crack."""
+    d.rectangle([x, y, x + w, y + h], fill=(238, 234, 222))
+    # the trace: calm, then the spike, then settling
+    mid_y = y + h * 0.26
+    trace = [(x + 0.03 * w, mid_y), (x + 0.30 * w, mid_y),
+             (x + 0.36 * w, mid_y - 8), (x + 0.42 * w, mid_y + 9),
+             (x + 0.48 * w, mid_y - 11), (x + 0.54 * w, mid_y + 6),
+             (x + 0.60 * w, mid_y - 3), (x + 0.97 * w, mid_y)]
+    d.line(trace, fill=RED, width=2)
+    d.line([x + 0.03 * w, mid_y + 10, x + 0.97 * w, mid_y + 10],
+           fill=(190, 186, 174), width=1)
+    # the wall: brick courses with a crack stepping down through them
+    wall_y = y + h * 0.52
+    for row in range(3):
+        ry = wall_y + row * 7
+        d.line([x + 0.08 * w, ry, x + 0.92 * w, ry], fill=(168, 120, 96),
+               width=2)
+        for col in range(4):
+            vx = x + (0.16 + 0.20 * col + (0.10 if row % 2 else 0.0)) * w
+            d.line([vx, ry, vx, ry + 7], fill=(168, 120, 96), width=1)
+    crack = [(x + 0.44 * w, wall_y - 2), (x + 0.50 * w, wall_y + 6),
+             (x + 0.47 * w, wall_y + 12), (x + 0.55 * w, wall_y + 20),
+             (x + 0.52 * w, wall_y + 27)]
+    d.line(crack, fill=(16, 12, 10), width=3)
 
 
 SCENES = {
@@ -712,27 +766,28 @@ SCENES = {
 # ------------------------------------------------------------------ page
 
 
-def grain(img, step=2, mod=89, hits=2, delta=7):
-    """A deterministic paper speckle, seeded by pure arithmetic."""
+def grain(img):
+    """Deterministic paper speckle: a fixed arithmetic lattice of
+    slightly darkened pixels, no randomness anywhere."""
     px = img.load()
     w, h = img.size
-    for yy in range(0, h, step):
-        for xx in range(0, w, step):
-            if (xx * 31 + yy * 17) % mod < hits:
+    for yy in range(0, h, 2):
+        for xx in range(0, w, 2):
+            if (xx * 41 + yy * 23) % 97 < 2:
                 r, g, b = px[xx, yy]
-                px[xx, yy] = (max(0, r - delta), max(0, g - delta),
-                              max(0, b - delta))
+                px[xx, yy] = (max(0, r - 7), max(0, g - 7), max(0, b - 7))
     return img
 
 
 def masthead(d, total_line):
-    d.text((EDGE, 13), "THE WORLD IN ONE DAY", font=font(SANS_BOLD, 17),
-           fill=RED)
+    d.rectangle([EDGE, 15, EDGE + 9, 24], fill=RED)
+    d.text((EDGE + 14, 11), "THE WORLD IN ONE DAY",
+           font=font(SANS_BOLD, 17), fill=RED)
     rf = font(SANS, 11)
-    d.text((PAGE - EDGE - d.textlength(total_line, font=rf), 17), total_line,
-           font=rf, fill=INK)
-    d.line([EDGE, 40, PAGE - EDGE, 40], fill=INK, width=3)
-    d.line([EDGE, 45, PAGE - EDGE, 45], fill=INK, width=1)
+    tw = d.textlength(total_line, font=rf)
+    d.text((PAGE - EDGE - tw, 16), total_line, font=rf, fill=INK)
+    d.line([EDGE, 39, PAGE - EDGE, 39], fill=INK, width=1)
+    d.line([EDGE, 42, PAGE - EDGE, 42], fill=INK, width=3)
 
 
 def render():

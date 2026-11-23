@@ -1,32 +1,34 @@
-"""Grader entrypoint for the news-image-20261122 entry.
+"""Deliver the committed front page to the grader's output folder.
 
-The front page itself is rendered ahead of time by frontpage.py and
-committed to this repository as entry.png. All this program does is
-deliver that file to the output directory the grader provides, so a
-run is a single file copy: fast, offline and deterministic. Should
-the committed render be unavailable for any reason, the compact
-fallback edition (fallback.png) is delivered instead, so the run
-still produces a valid front page for the same day.
+frontpage.py renders the page ahead of time and its output is
+committed as entry.png, so the graded run never draws anything: it
+looks for the output directory, then copies the page across. The
+compact fallback.png rides along as insurance — if the main render
+is ever missing from the snapshot, the fallback is delivered
+instead, and the run still yields a valid page for the same day.
 """
 
 import os
 import shutil
 
-PAGE = "entry.png"
-FALLBACK = "fallback.png"
+PAGE_NAME = "entry.png"
+SPARE_NAME = "fallback.png"
 
 
-def deliver() -> str:
-    base = os.path.dirname(os.path.abspath(__file__))
-    target_dir = os.environ.get("MAKEFUN_OUTPUT_DIR") or "/output"
-    os.makedirs(target_dir, exist_ok=True)
-    target = os.path.join(target_dir, PAGE)
-    try:
-        shutil.copyfile(os.path.join(base, PAGE), target)
-    except OSError:
-        shutil.copyfile(os.path.join(base, FALLBACK), target)
-    return target
+def output_dir() -> str:
+    folder = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    os.makedirs(folder, exist_ok=True)
+    return folder
+
+
+def main() -> None:
+    here = os.path.dirname(os.path.abspath(__file__))
+    dest = os.path.join(output_dir(), PAGE_NAME)
+    page = os.path.join(here, PAGE_NAME)
+    if not os.path.exists(page):
+        page = os.path.join(here, SPARE_NAME)
+    shutil.copyfile(page, dest)
 
 
 if __name__ == "__main__":
-    deliver()
+    main()
