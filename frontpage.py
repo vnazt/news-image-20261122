@@ -197,11 +197,11 @@ NUMBERS = [
 
 DATE_CHECK = (
     "DATE CHECK — Left out as other days' news: the 400-drone, "
-    "110-missile barrage (Thu 19–Fri 20 Nov) · the 148-drone night and "
-    "the Kryvyi Rih double-tap (Fri–Sat) · BepiColombo's Mercury burn "
-    "(Sat) · the Shenzhen summit (19 Nov) · the Peru quake itself "
-    "(Fri) — only Sunday's completed toll count is on this page. "
-    "Tonight's real count: 186 drones, at the top of this page."
+    "110-missile barrage (Thu 19–Fri 20 Nov) · the 148-drone night "
+    "and the Kryvyi Rih double-tap (Fri–Sat) · BepiColombo's Mercury "
+    "burn (Sat) · the Shenzhen summit (19 Nov) · the Peru quake "
+    "itself (Fri) — only Sunday's completed toll is printed here. "
+    "Tonight's count: 186 drones, at the top of this page."
 )
 
 STORY_COUNT = len(HEROES) + len(CARDS) + len(BRIEFS)
@@ -212,54 +212,72 @@ REGION_TALLY = Counter(
 )
 
 # ------------------------------------------------------------------ map
-# A coarse block world at 60 x 24 cells: '#' is land. The grid is
-# drawn for this page; pins below are fractions of the map box, so
-# they stay put whatever the grid's resolution.
+# A block world at 88 x 36 cells on a plain equirectangular grid:
+# each column is ~4.1 degrees of longitude, each row ~4 degrees of
+# latitude (84N down to 56S), so the shapes keep their real
+# proportions — the Americas waist, Africa's bulge and horn, India's
+# triangle, the Indonesian scatter, Australia and New Zealand.
+# '#' is land. Pins below are fractions of the map box, computed
+# from each place's real longitude and latitude, so they stay put
+# whatever the grid's resolution.
 
 WORLD = [
-    "                                                            ",
-    "     ######          ####################################   ",
-    "  ##########        ######################################  ",
-    "  ###########       #####################################   ",
-    "   #########        ####################################    ",
-    "    ########         ##################################     ",
-    "     ######           ################################      ",
-    "      #####            #############################        ",
-    "      ####              #########################           ",
-    "       ###               #######################            ",
-    "       ###                #####################             ",
-    "       ####                ##################               ",
-    "        #####               ################        ##      ",
-    "        ######               #############         ####     ",
-    "         #####                ##########            ##      ",
-    "         ####                  ########                     ",
-    "          ###                   ######           #######    ",
-    "          ##                     ####            #######    ",
-    "          #                       ##              #####     ",
-    "                                                            ",
-    "                                                            ",
-    "                                                            ",
-    "                                                            ",
-    "                                                            ",
+    "            ######    #####       #####       ##       #####       ###                  ",
+    "             ####   ######       #######      ###      #######     ####     ###         ",
+    "          ###################    #######          ######################################",
+    "   ###########################    #####      ###########################################",
+    "   ###################    #####    ###  #   ############################################",
+    "    ###################    #####            ############################################",
+    "            ############   #####          ##############################################",
+    "            ###################          ###############################################",
+    "            ##################            #######################################       ",
+    "            ##################           #############    ########################      ",
+    "            ##################           ########## ############################        ",
+    "            #################            ######## #############################         ",
+    "             ###############             #######################################        ",
+    "             ########## ##              #####################################           ",
+    "             ######                     #################################               ",
+    "              #####                     ################ ################ ##            ",
+    "                ####                   ################       ##########  #             ",
+    "                 ####                  #################      ##  #####                 ",
+    "                         ########        ###############      #     ## ###              ",
+    "                         #########         ##########             ### ####### #####     ",
+    "                         ##########           ########            ### ###### ######     ",
+    "                         ###########          #######               ######   ######     ",
+    "                         ############          #######              ######   ######     ",
+    "                          ###########          #######                  ###   ###       ",
+    "                          ###########          ####### ##              ###########      ",
+    "                          ##########           ######  #               ###########      ",
+    "                          #########           #######  #               ###########      ",
+    "                          ########            ######                    #########       ",
+    "                          #######             #####                     #########       ",
+    "                          ######              ####                       #######     #  ",
+    "                          #####                                           #####      ###",
+    "                          ####                                                      ### ",
+    "                          ###                                                      ###  ",
+    "                          ###                                                           ",
+    "                          ##                                                            ",
+    "                                                                                        ",
 ]
 
-# Pin for every pictured story, as a fraction of the map box.
+# Pin for every pictured story, as a fraction of the map box:
+# fx = (lon + 180) / 360, fy = (84 - lat) / 144.
 PINS = {
-    1: (0.545, 0.16),    # Kyiv region
-    2: (0.565, 0.30),    # Antalya
-    3: (0.615, 0.40),    # Manama, Bahrain
-    4: (0.800, 0.42),    # Hong Kong
-    5: (0.850, 0.85),    # Wellington
-    6: (0.075, 0.30),    # Las Vegas
-    7: (0.115, 0.37),    # San Antonio
-    8: (0.525, 0.07),    # Gulf of Finland
-    9: (0.635, 0.36),    # Tehran
-    10: (0.235, 0.68),   # Brasília
-    11: (0.155, 0.28),   # Washington
-    12: (0.475, 0.19),   # Brussels
-    13: (0.700, 0.46),   # Manipur
-    14: (0.758, 0.60),   # Cikande, Java
-    15: (0.175, 0.66),   # Junín, Peru
+    1: (0.585, 0.233),   # Kyiv region (30.5E, 50.4N)
+    2: (0.586, 0.327),   # Antalya (30.7E, 36.9N)
+    3: (0.648, 0.408),   # Manama, Bahrain (50.6E, 26.2N)
+    4: (0.817, 0.428),   # Hong Kong (114.2E, 22.3N)
+    5: (0.986, 0.870),   # Wellington (174.8E, 41.3S)
+    6: (0.180, 0.332),   # Las Vegas (115.1W, 36.2N)
+    7: (0.226, 0.379),   # San Antonio (98.5W, 29.4N)
+    8: (0.572, 0.158),   # Gulf of Finland (27E, 60N)
+    9: (0.643, 0.336),   # Tehran (51.4E, 35.7N)
+    10: (0.367, 0.693),  # Brasília (47.9W, 15.8S)
+    11: (0.286, 0.313),  # Washington (77W, 38.9N)
+    12: (0.512, 0.230),  # Brussels (4.35E, 50.85N)
+    13: (0.761, 0.411),  # Manipur (93.9E, 24.8N)
+    14: (0.796, 0.626),  # Cikande, Java (106.4E, 6.2S)
+    15: (0.300, 0.663),  # Junín, Peru (75.2W, 11.5S)
 }
 
 # ------------------------------------------------------------------ helpers
@@ -312,9 +330,10 @@ def pin(draw, cx, cy, num, r=8.5):
     draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=RED,
                  outline=(255, 255, 255), width=2)
     label = str(num)
-    fnt = font(SANS_BOLD, 10 if num < 10 else 9)
+    size = 10 if r >= 10 else (9 if r >= 8 else 8)
+    fnt = font(SANS_BOLD, size)
     box = draw.textbbox((0, 0), label, font=fnt)
-    draw.text((cx - (box[2] - box[0]) / 2 - box[0], cy - 5.5),
+    draw.text((cx - (box[2] - box[0]) / 2 - box[0], cy - size / 2 - 0.5),
               label, font=fnt, fill=(255, 255, 255))
 
 
@@ -349,38 +368,39 @@ def _waves(d, x, y, w, rows_y):
 def scene_drones(d, x, y, w, h):
     """Night sky over a city block: drone silhouettes coming in from
     eight directions, a searchlight cone, one block burning."""
-    d.rectangle([x, y, x + w, y + h], fill=NIGHT)
+    d.rectangle([x, y, x + w, y + h], fill=(23, 34, 52))
     # stars
     for fx, fy in [(0.06, 0.12), (0.30, 0.08), (0.52, 0.16), (0.86, 0.10),
                    (0.68, 0.06), (0.16, 0.30)]:
         d.ellipse([x + fx * w, y + fy * h, x + fx * w + 2, y + fy * h + 2],
-                  fill=(220, 224, 235))
-    # drone silhouettes with dashed approach trails
-    for fx, fy in [(0.16, 0.20), (0.38, 0.13), (0.60, 0.22), (0.80, 0.14)]:
+                  fill=(225, 229, 240))
+    # drone silhouettes with dashed approach trails, kept clear of
+    # the scene tag in the top-left corner
+    for fx, fy in [(0.36, 0.30), (0.55, 0.18), (0.72, 0.30), (0.86, 0.16)]:
         dx, dy = x + fx * w, y + fy * h
         d.line([dx - 9, dy - 6, dx + 9, dy + 6], fill=(235, 235, 240), width=2)
         d.line([dx - 9, dy + 6, dx + 9, dy - 6], fill=(235, 235, 240), width=2)
         d.ellipse([dx - 2, dy - 2, dx + 2, dy + 2], fill=RED)
         for k in range(3):
             tx = dx - 16 - k * 9
-            d.point((tx, dy + 8 + k * 5), fill=(170, 175, 190))
+            d.point((tx, dy + 8 + k * 5), fill=(180, 185, 200))
     # searchlight cone from the ground, right
     d.polygon([(x + 0.90 * w, y + h), (x + 0.52 * w, y + 4),
-               (x + 0.64 * w, y + 4)], fill=(96, 108, 128))
+               (x + 0.64 * w, y + 4)], fill=(126, 138, 160))
     # city blocks along the bottom, one of them burning
     base = y + h
     for i, (fx, fw, fh) in enumerate([(0.03, 0.13, 0.34), (0.19, 0.15, 0.46),
                                       (0.37, 0.14, 0.38), (0.54, 0.16, 0.52),
                                       (0.73, 0.13, 0.40), (0.88, 0.10, 0.30)]):
         bx = x + fx * w
-        d.rectangle([bx, base - fh * h, bx + fw * w, base], fill=(30, 34, 44))
+        d.rectangle([bx, base - fh * h, bx + fw * w, base], fill=(45, 54, 71))
         for r in range(3):
             for c in range(3):
                 if (i * 7 + r * 3 + c) % 3:
                     d.rectangle([bx + 4 + c * (fw * w - 8) / 3,
                                  base - fh * h + 4 + r * (fh * h - 8) / 3,
-                                 bx + 6 + c * (fw * w - 8) / 3,
-                                 base - fh * h + 6 + r * (fh * h - 8) / 3],
+                                 bx + 7 + c * (fw * w - 8) / 3,
+                                 base - fh * h + 7 + r * (fh * h - 8) / 3],
                                 fill=GOLD)
     burst(d, x + 0.615 * w, base - 0.52 * h - 4, 11)
     burst(d, x + 0.585 * w, base - 0.46 * h, 6)
@@ -389,8 +409,8 @@ def scene_drones(d, x, y, w, h):
            fill=(240, 236, 226))
     tag2 = "161 DOWNED"
     tw = d.textlength(tag2, font=font(SANS_BOLD, 9))
-    d.rectangle([x + w - tw - 10, y + 3, x + w - 4, y + 16], fill=RED)
-    d.text((x + w - tw - 7, y + 5), tag2, font=font(SANS_BOLD, 9),
+    d.rectangle([x + w - tw - 14, y + 3, x + w - 8, y + 16], fill=RED)
+    d.text((x + w - tw - 11, y + 5), tag2, font=font(SANS_BOLD, 9),
            fill=(255, 255, 255))
 
 
@@ -403,21 +423,27 @@ def scene_cop(d, x, y, w, h):
     px0, py0 = x + 0.30 * w, y + 6
     px1, py1 = x + 0.62 * w, y + h - 6
     d.rectangle([px0, py0, px1, py1], fill=(238, 234, 222))
+    # the verdict: a red X across the page, inset from its edges
+    d.line([px0 + 5, py0 + 5, px1 - 5, py1 - 5], fill=RED, width=2)
+    d.line([px0 + 5, py1 - 5, px1 - 5, py0 + 5], fill=RED, width=2)
+    # title on a clean patch of the page, above the X's crossing
+    d.rectangle([px0 + 5, py0 + 4, px0 + 62, py0 + 16], fill=(238, 234, 222))
     d.text((px0 + 7, py0 + 5), "FINAL TEXT", font=font(SANS_BOLD, 9),
            fill=INK)
-    for i, frac in enumerate((0.82, 0.66, 0.74)):
-        ly = py0 + 24 + i * 11
+    for i, frac in enumerate((0.82, 0.66)):
+        ly = py0 + 22 + i * 10
         d.line([px0 + 7, ly, px0 + 7 + frac * (px1 - px0 - 14), ly],
                fill=(122, 120, 112), width=2)
+    # the struck-through line, set high so the X's lower arm and the
+    # strike never tangle into a scribble
     ff = font(SERIF_ITALIC, 12)
-    fy = py0 + 60
+    fy = py0 + 42
+    d.rectangle([px0 + 5, fy - 2, px0 + 12 + d.textlength("fossil fuels", font=ff),
+                 fy + 14], fill=(238, 234, 222))
     d.text((px0 + 7, fy), "fossil fuels", font=ff, fill=INK)
     d.line([px0 + 5, fy + 7,
             px0 + 9 + d.textlength("fossil fuels", font=ff), fy + 7],
            fill=RED, width=2)
-    # the verdict: a red X across the whole page
-    d.line([px0 + 4, py0 + 4, px1 - 4, py1 - 4], fill=RED, width=3)
-    d.line([px0 + 4, py1 - 4, px1 - 4, py0 + 4], fill=RED, width=3)
     # flags at half-mast, right
     for i, fx in enumerate((0.70, 0.80, 0.90)):
         gx = x + fx * w
@@ -432,7 +458,7 @@ def scene_cop(d, x, y, w, h):
     d.rectangle([gx + 3, gy - 15, gx + 15, gy - 5], fill=(150, 100, 50))
     d.line([x + 0.04 * w, gy + 13, x + 0.24 * w, gy + 13],
            fill=(235, 232, 220), width=2)
-    d.text((x + 0.70 * w, y + h - 13), "NO DEAL", font=font(SANS_BOLD, 9),
+    d.text((x + 0.68 * w, y + h - 14), "NO DEAL", font=font(SANS_BOLD, 9),
            fill=(245, 243, 235))
 
 
@@ -451,9 +477,9 @@ def scene_radar(d, x, y, w, h):
     d.arc([mx - 14, base - 52, mx + 16, base - 22], 300, 120,
           fill=(225, 228, 235), width=3)
     d.line([mx + 2, base - 37, mx + 20, base - 44], fill=RED, width=2)
-    # dashed claim arcs crossing the sky
+    # dashed claim arcs crossing the sky, starting below the tag
     for off in (0, 7, 14):
-        d.arc([x + 0.20 * w, y + 2 + off, x + 0.86 * w, y + h * 0.9 + off],
+        d.arc([x + 0.22 * w, y + 16 + off, x + 0.88 * w, y + h * 0.95 + off],
               200, 320, fill=(240, 170, 90), width=1)
     # the fire at the civilian site, centre
     burst(d, x + 0.50 * w, base - 16, 12)
@@ -470,8 +496,8 @@ def scene_radar(d, x, y, w, h):
            fill=(240, 236, 226))
     tag2 = "2 RADARS?"
     tw = d.textlength(tag2, font=font(SANS_BOLD, 9))
-    d.rectangle([x + w - tw - 10, y + 3, x + w - 4, y + 16], fill=RED)
-    d.text((x + w - tw - 7, y + 5), tag2, font=font(SANS_BOLD, 9),
+    d.rectangle([x + w - tw - 14, y + 3, x + w - 8, y + 16], fill=RED)
+    d.text((x + w - tw - 11, y + 5), tag2, font=font(SANS_BOLD, 9),
            fill=(255, 255, 255))
 
 
@@ -811,7 +837,7 @@ def render():
         d.line([txp, 165, txp, 168], fill=FAINT, width=1)
     for frac in (0.042, 0.125, 0.229, 0.250, 0.333, 0.583):
         ex = tl_x + tl_span * frac
-        d.ellipse([ex - 2, 161, ex + 2, 165], fill=RED)
+        d.ellipse([ex - 2, 166, ex + 2, 170], fill=RED)
     d.line([EDGE, 168, PAGE - EDGE, 168], fill=INK, width=1)
 
     # ---- numbers strip
@@ -876,7 +902,7 @@ def render():
     by = 758
     d.text((EDGE, by), "WHERE IT HAPPENED", font=font(SANS_BOLD, 12), fill=INK)
     map_x, map_y = EDGE, by + 24
-    pitch_x, pitch_y = 7.5, 7.0
+    pitch_x, pitch_y = 4.0, 4.0
     map_w = len(WORLD[0]) * pitch_x
     map_h = len(WORLD) * pitch_y
     d.rectangle([map_x - 5, map_y - 5, map_x + map_w + 5, map_y + map_h + 5],
@@ -886,11 +912,11 @@ def render():
             if ch == "#":
                 cxp = map_x + ci * pitch_x + pitch_x / 2
                 cyp = map_y + ri * pitch_y + pitch_y / 2
-                d.rectangle([cxp - pitch_x / 2 + 0.6, cyp - pitch_y / 2 + 0.6,
-                             cxp + pitch_x / 2 - 0.6, cyp + pitch_y / 2 - 0.6],
+                d.rectangle([cxp - pitch_x / 2 + 0.5, cyp - pitch_y / 2 + 0.5,
+                             cxp + pitch_x / 2 - 0.5, cyp + pitch_y / 2 - 0.5],
                             fill=MAP_DOT)
     for num, (fx, fy) in PINS.items():
-        pin(d, map_x + fx * map_w, map_y + fy * map_h, num, r=8.5)
+        pin(d, map_x + fx * map_w, map_y + fy * map_h, num, r=7)
     d.text((EDGE, map_y + map_h + 8),
            "Each number is the pictured story of that number on this page.",
            font=font(SERIF_ITALIC, 10), fill=FAINT)
@@ -898,23 +924,23 @@ def render():
     bx = 404
     d.text((bx, by), f"ALSO ON SUNDAY — {len(BRIEFS)} MORE STORIES",
            font=font(SANS_BOLD, 12), fill=INK)
-    bf = font(SANS_BOLD, 12)
-    col_w = 288
+    bf = font(SANS_BOLD, 11)
+    col_w = 284
     for i, (num, text, _region) in enumerate(BRIEFS):
         col, row_i = divmod(i, 11)
-        x0 = bx + col * (col_w + 16)
+        x0 = bx + col * (col_w + 12)
         y0 = by + 16 + row_i * 14
         label = f"{num} "
         d.text((x0, y0), label, font=bf, fill=RED)
-        fit(d, x0 + d.textlength(label, font=bf), y0, text, SANS, 12,
-            col_w - d.textlength(label, font=bf), INK, floor=10)
+        fit(d, x0 + d.textlength(label, font=bf), y0, text, SANS, 11,
+            col_w - d.textlength(label, font=bf), INK, floor=8)
 
     # ---- date-check box
-    box_y = 952
-    d.rectangle([EDGE, box_y, PAGE - EDGE, box_y + 36], fill=(250, 238, 231),
+    box_y = 946
+    d.rectangle([EDGE, box_y, PAGE - EDGE, box_y + 40], fill=(250, 238, 231),
                 outline=RED, width=2)
-    block(d, EDGE + 8, box_y + 6, DATE_CHECK, font(SERIF, 11), DEEP_RED,
-          SPAN - 16, 12, cap=2)
+    block(d, EDGE + 16, box_y + 7, DATE_CHECK, font(SERIF, 11), DEEP_RED,
+          SPAN - 32, 12, cap=2)
 
     # ---- footer: the certainty legend, then the dating line
     d.text((EDGE, 994),
