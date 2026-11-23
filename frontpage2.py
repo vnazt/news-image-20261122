@@ -4,8 +4,8 @@ Same verified dossier as frontpage.py (36 stories, Sunday 22 November
 2026, every figure two-sourced, COP31 printed at its end state),
 rebuilt in the full-colour illustrated style of the winning daily
 pages: gradient skies and seas in the hero scenes, a coloured
-mini-illustration on every card, coloured certainty pills, a coloured
-landmass world map on a pale-blue sea, and a dense, grid-disciplined
+mini-illustration on every card, coloured certainty pills, a bold landmass world map on a deep
+navy-to-teal sea, and a dense, grid-disciplined
 "mewah" page — rich ink everywhere, nothing clipped, nothing spilled.
 
 frontpage.py stays in the repo as the first edition; this file is the
@@ -37,11 +37,13 @@ DEEP_RED = (148, 27, 18)
 NAVY = (19, 35, 57)
 GOLD = (233, 165, 33)
 ORANGE = (243, 121, 33)
-PIN_BLUE = (23, 58, 107)
+PIN_FILL = (204, 32, 24)
 BADGE_BLUE = (36, 84, 158)
-SEA = (203, 226, 243)
-LAND = (233, 221, 193)
-LAND_DEEP = (224, 209, 175)
+SEA_TOP = (8, 34, 68)
+SEA_BOT = (10, 86, 106)
+GRATICULE = (43, 102, 130)
+LAND = (240, 183, 92)
+LAND_DEEP = (224, 152, 58)
 RULE_SOFT = (198, 190, 168)
 
 PILL_INK = {
@@ -118,8 +120,12 @@ def badge(d, cx, cy, num, r=10):
 
 
 def pin2(d, cx, cy, num, r=7):
-    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=PIN_BLUE,
-              outline=(255, 255, 255), width=2)
+    # a white halo ring and a saturated red fill, so the pin pops on
+    # the deep sea and on the gold land alike
+    d.ellipse([cx - r - 1.5, cy - r - 1.5, cx + r + 1.5,
+               cy + r + 1.5], fill=(255, 255, 255))
+    d.ellipse([cx - r, cy - r, cx + r, cy + r], fill=PIN_FILL,
+              outline=(10, 22, 34), width=1)
     label = str(num)
     fnt = font(SANS_BOLD, 9 if num < 10 else 8)
     box = d.textbbox((0, 0), label, font=fnt)
@@ -654,20 +660,30 @@ def render():
     pitch_x, pitch_y = 4.0, 3.6
     map_w = len(WORLD[0]) * pitch_x
     map_h = len(WORLD) * pitch_y
-    d.rectangle([map_x - 5, map_y - 5, map_x + map_w + 5,
-                 map_y + map_h + 5], fill=SEA)
+    # the map is drawn on its own canvas — a deep navy-to-teal sea
+    # with a faint graticule under saturated gold land — pasted whole
+    sea_w, sea_h = int(map_w) + 10, int(map_h) + 10
+    sea_img = vgrad(sea_w, sea_h, SEA_TOP, SEA_BOT)
+    sd = ImageDraw.Draw(sea_img)
+    for gi in range(8, len(WORLD[0]), 8):
+        gx = 5 + gi * pitch_x
+        sd.line([gx, 3, gx, sea_h - 3], fill=GRATICULE, width=1)
+    for gj in range(6, len(WORLD), 6):
+        gy = 5 + gj * pitch_y
+        sd.line([3, gy, sea_w - 3, gy], fill=GRATICULE, width=1)
     for ri, row in enumerate(WORLD):
         for ci, ch in enumerate(row):
             if ch == "#":
-                cxp = map_x + ci * pitch_x + pitch_x / 2
-                cyp = map_y + ri * pitch_y + pitch_y / 2
+                cxp = 5 + ci * pitch_x + pitch_x / 2
+                cyp = 5 + ri * pitch_y + pitch_y / 2
                 tone = LAND_DEEP if (ri + ci) % 7 == 0 else LAND
-                d.rectangle([cxp - pitch_x / 2 + 0.4,
-                             cyp - pitch_y / 2 + 0.4,
-                             cxp + pitch_x / 2 - 0.4,
-                             cyp + pitch_y / 2 - 0.4], fill=tone)
+                sd.rectangle([cxp - pitch_x / 2 + 0.4,
+                              cyp - pitch_y / 2 + 0.4,
+                              cxp + pitch_x / 2 - 0.4,
+                              cyp + pitch_y / 2 - 0.4], fill=tone)
+    img.paste(sea_img, (map_x - 5, map_y - 5))
     for num, (fx, fy) in PINS.items():
-        pin2(d, map_x + fx * map_w, map_y + fy * map_h, num, r=7)
+        pin2(d, map_x + fx * map_w, map_y + fy * map_h, num, r=6.5)
     # region legend under the map, coloured squares + computed counts
     lf = font(SANS, 9)
     for li, group in enumerate((TAB_ORDER[:3], TAB_ORDER[3:])):
